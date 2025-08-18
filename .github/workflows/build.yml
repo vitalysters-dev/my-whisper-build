@@ -29,7 +29,8 @@ jobs:
           echo 'CFLAGS   := -I. -O3 -DNDEBUG -std=c11 -fPIC -pthread -DGGML_ARM_NO_FP16 -D_GNU_SOURCE' >> Makefile.simple
           echo 'CXXFLAGS := -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -DGGML_ARM_NO_FP16' >> Makefile.simple
           echo 'LDFLAGS  := -pthread' >> Makefile.simple
-          echo 'OBJS     := ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o whisper.o' >> Makefile.simple
+          # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавили examples/common.o ---
+          echo 'OBJS     := ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o whisper.o examples/common.o' >> Makefile.simple
           echo 'main: $(OBJS) examples/main/main.o' >> Makefile.simple
           echo '	$(CXX) $(CXXFLAGS) $(OBJS) examples/main/main.o -o $@ $(LDFLAGS)' >> Makefile.simple
           
