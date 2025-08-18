@@ -23,11 +23,18 @@ jobs:
         run: |
           cd whisper.cpp-1.5.1
           # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-          # Мы "патчим" Makefile, чтобы убрать проблемный флаг
-          sed -i 's/-mcpu=native//g' Makefile
-          # Теперь запускаем сборку с указанием нашего кросс-компилятора
-          # Makefile возьмет наши компиляторы и не добавит ничего лишнего
-          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
+          # Мы создаем свой собственный, ПРОСТОЙ Makefile
+          echo 'CC       := aarch64-linux-gnu-gcc' > Makefile.simple
+          echo 'CXX      := aarch64-linux-gnu-g++' >> Makefile.simple
+          echo 'CFLAGS   := -I. -O3 -DNDEBUG -std=c11 -fPIC -pthread -DGGML_ARM_NO_FP16 -D_GNU_SOURCE' >> Makefile.simple
+          echo 'CXXFLAGS := -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -DGGML_ARM_NO_FP16' >> Makefile.simple
+          echo 'LDFLAGS  := -pthread' >> Makefile.simple
+          echo 'OBJS     := ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o whisper.o' >> Makefile.simple
+          echo 'main: $(OBJS) examples/main/main.o' >> Makefile.simple
+          echo '	$(CXX) $(CXXFLAGS) $(OBJS) examples/main/main.o -o $@ $(LDFLAGS)' >> Makefile.simple
+          
+          # Теперь запускаем сборку, используя НАШУ простую инструкцию
+          make -f Makefile.simple
 
       - name: Prepare Artifact
         run: |
