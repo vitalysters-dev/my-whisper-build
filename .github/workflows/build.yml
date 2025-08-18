@@ -1,31 +1,41 @@
-Run cd whisper.cpp-1.5.1
-  cd whisper.cpp-1.5.1
-  # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-  # Мы "вырезаем" все флаги оптимизации x86 из Makefile
-  sed -i 's/-mavx -mavx2 -mfma -mf16c -msse3//g' Makefile
-  # Теперь запускаем сборку с указанием нашего кросс-компилятора
-  make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
-  shell: /usr/bin/bash -e {0}
-I whisper.cpp build info: 
-I UNAME_S:  Linux
-I UNAME_P:  x86_64
-I UNAME_M:  x86_64
-I CFLAGS:   -I.              -O3 -DNDEBUG -std=c11   -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -mavx -mavx2 -mfma -mf16c -msse3 -mssse3
-I CXXFLAGS: -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -mavx -mavx2 -mfma -mf16c -msse3 -mssse3
-I LDFLAGS:  
-I CC:       aarch64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
-I CXX:      aarch64-linux-gnu-g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+name: Build Whisper.cpp for CoreELEC
 
-aarch64-linux-gnu-gcc  -I.              -O3 -DNDEBUG -std=c11   -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -mavx -mavx2 -mfma -mf16c -msse3 -mssse3   -c ggml.c -o ggml.o
-aarch64-linux-gnu-gcc: error: unrecognized command-line option ‘-mavx’
-aarch64-linux-gnu-gcc: error: unrecognized command-line option ‘-mavx2’
-aarch64-linux-gnu-gcc: error: unrecognized command-line option ‘-mfma’
-aarch64-linux-gnu-gcc: error: unrecognized command-line option ‘-mf16c’
-aarch64-linux-gnu-gcc: error: unrecognized command-line option ‘-msse3’
-aarch64-linux-gnu-gcc: error: unrecognized command-line option ‘-mssse3’
-make: *** [Makefile:299: ggml.o] Error 1
-Error: Process completed with exit code 2.
-0s
-0s
-0s
-Cleaning up orphan processes
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Download Whisper.cpp Source
+        run: |
+          wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.5.1.tar.gz
+          tar -xvf v1.5.1.tar.gz
+
+      - name: Build Whisper.cpp
+        run: |
+          cd whisper.cpp-1.5.1
+          # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+          # Мы "обезвреживаем" скрипт, который генерирует проблемные флаги,
+          # заменяя его содержимое на команду, которая ничего не выводит.
+          echo "" > scripts/get-flags.mk
+          # Теперь запускаем сборку. Makefile вызовет пустой скрипт и не добавит ничего лишнего.
+          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
+
+      - name: Prepare Artifact
+        run: |
+          mkdir artifact
+          cp whisper.cpp-1.5.1/main ./artifact/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-main-binary
+          path: artifact
