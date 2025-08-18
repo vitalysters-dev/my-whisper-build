@@ -22,6 +22,10 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
+          # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+          # Мы "вырезаем" все флаги оптимизации x86 из Makefile
+          sed -i 's/-mavx -mavx2 -mfma -mf16c -msse3//g' Makefile
+          # Теперь запускаем сборку с указанием нашего кросс-компилятора
           make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
 
       - name: Prepare Artifact
