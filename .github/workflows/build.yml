@@ -19,31 +19,9 @@ jobs:
           wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.5.1.tar.gz
           tar -xvf v1.5.1.tar.gz
 
-      - name: Build Whisper.cpp
+      - name: "DEBUG: Show me the build command"
         run: |
           cd whisper.cpp-1.5.1
-          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ПРЯМОЙ ВЫЗОВ КОМПИЛЯТОРА С ПОЛНЫМ НАБОРОМ ФЛАГОВ ---
-          aarch64-linux-gnu-g++ \
-            -I. -I./examples \
-            -DNDEBUG -D_GNU_SOURCE -DGGML_USE_K_QUANTS -DGGML_USE_ACCELERATE -DACCELERATE_NEW_LAPACK -DACCELERATE_LAPACK_ILP64 \
-            -std=c++11 -fPIC -pthread \
-            -o main \
-            whisper.cpp \
-            ggml.c \
-            ggml-alloc.c \
-            ggml-backend.c \
-            ggml-quants.c \
-            examples/common.cpp \
-            examples/main/main.cpp \
-            -static
-
-      - name: Prepare Artifact
-        run: |
-          mkdir artifact
-          cp whisper.cpp-1.5.1/main ./artifact/
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: whisper-main-binary
-          path: artifact
+          # --- ГЛАВНАЯ КОМАНДА ДЛЯ ДИАГНОСТИКИ ---
+          # Флаг -n говорит make: "Не выполняй команды, просто покажи их мне"
+          make -n main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
