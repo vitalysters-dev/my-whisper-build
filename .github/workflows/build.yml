@@ -12,7 +12,8 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aарch64-linux-gnu
+          # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Правильное имя пакета ---
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - name: Download Whisper.cpp Source
         run: |
@@ -22,21 +23,8 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ПРЯМОЙ ВЫЗОВ С ПОЛНЫМ НАБОРОМ БЕЗОПАСНЫХ ФЛАГОВ ---
-          aarch64-linux-gnu-g++ \
-            -I. -I./examples \
-            -O3 -DNDEBUG -std=c++11 -fPIC -pthread -D_GNU_SOURCE \
-            -DGGML_USE_K_QUANTS \
-            -march=armv8-a+neon \
-            -o main \
-            whisper.cpp \
-            ggml.c \
-            ggml-alloc.c \
-            ggml-backend.c \
-            ggml-quants.c \
-            examples/common.cpp \
-            examples/main/main.cpp \
-            -static
+          # --- ПРОВЕРЕННЫЙ, НАДЕЖНЫЙ МЕТОД ---
+          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ LDFLAGS="-static"
 
       - name: Prepare Artifact
         run: |
