@@ -19,9 +19,35 @@ jobs:
           wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.5.1.tar.gz
           tar -xvf v1.5.1.tar.gz
 
-      - name: "DEBUG: Show me the build command"
+      - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ГЛАВНАЯ КОМАНДА ДЛЯ ДИАГНОСТИКИ ---
-          # Флаг -n говорит make: "Не выполняй команды, просто покажи их мне"
-          make -n main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++
+          # --- ФИНАЛЬНЫЙ ШАГ: ПРЯМОЙ ВЫЗОВ КОМПИЛЯТОРА С ПРАВИЛЬНЫМИ ФАЙЛАМИ И ФЛАГАМИ ---
+          
+          # 1. Сначала компилируем все .c файлы в .o с помощью gcc
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml.c -o ggml.o
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-alloc.c -o ggml-alloc.o
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-backend.c -o ggml-backend.o
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-quants.c -o ggml-quants.o
+
+          # 2. Теперь "склеиваем" все вместе с помощью g++, добавив флаг -static
+          aarch64-linux-gnu-g++ \
+            -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread \
+            examples/main/main.cpp \
+            examples/common.cpp \
+            examples/common-ggml.cpp \
+            whisper.cpp \
+            ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o \
+            -o main \
+            -static
+
+      - name: Prepare Artifact
+        run: |
+          mkdir artifact
+          cp whisper.cpp-1.5.1/main ./artifact/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-main-binary
+          path: artifact
