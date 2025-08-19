@@ -1,4 +1,4 @@
-name: Build Whisper.cpp for CoreELEC (Optimized)
+name: Build Whisper.cpp for CoreELEC
 
 on:
   push:
@@ -19,10 +19,10 @@ jobs:
           wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.5.1.tar.gz
           tar -xvf v1.5.1.tar.gz
 
-      - name: Build Whisper.cpp with Safe Optimizations
+      - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ПРЯМОЙ ВЫЗОВ С БЕЗОПАСНЫМИ ОПТИМИЗАЦИЯМИ ---
+          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ПРЯМОЙ ВЫЗОВ С ПОЛНЫМ НАБОРОМ БЕЗОПАСНЫХ ФЛАГОВ ---
           aarch64-linux-gnu-g++ \
             -I. -I./examples \
             -O3 -DNDEBUG -std=c++11 -fPIC -pthread -D_GNU_SOURCE \
