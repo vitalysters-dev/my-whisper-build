@@ -22,20 +22,8 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-          # Мы создаем свой собственный, ПРОСТОЙ Makefile
-          echo 'CC       := aarch64-linux-gnu-gcc' > Makefile.simple
-          echo 'CXX      := aarch64-linux-gnu-g++' >> Makefile.simple
-          echo 'CFLAGS   := -I. -O3 -DNDEBUG -std=c11 -fPIC -pthread -DGGML_ARM_NO_FP16 -D_GNU_SOURCE' >> Makefile.simple
-          echo 'CXXFLAGS := -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -DGGML_ARM_NO_FP16' >> Makefile.simple
-          echo 'LDFLAGS  := -pthread' >> Makefile.simple
-          # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавили examples/common.o ---
-          echo 'OBJS     := ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o whisper.o examples/common.o' >> Makefile.simple
-          echo 'main: $(OBJS) examples/main/main.o' >> Makefile.simple
-          echo '	$(CXX) $(CXXFLAGS) $(OBJS) examples/main/main.o -o $@ $(LDFLAGS)' >> Makefile.simple
-          
-          # Теперь запускаем сборку, используя НАШУ простую инструкцию
-          make -f Makefile.simple
+          # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: ДОБАВЛЯЕМ ФЛАГ -static ---
+          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ LDFLAGS="-static"
 
       - name: Prepare Artifact
         run: |
