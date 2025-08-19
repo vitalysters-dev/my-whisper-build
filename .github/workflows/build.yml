@@ -22,7 +22,10 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: ДОБАВЛЯЕМ ФЛАГ -static ---
+          # --- ИСПРАВЛЕНИЕ №1: "Патчим" Makefile, чтобы убрать проблемные флаги x86 ---
+          sed -i 's/-mcpu=native//g' Makefile
+          
+          # --- ИСПРАВЛЕНИЕ №2: Запускаем сборку с флагом -static ---
           make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ LDFLAGS="-static"
 
       - name: Prepare Artifact
