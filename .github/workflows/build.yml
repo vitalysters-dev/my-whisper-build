@@ -22,11 +22,21 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-          # Мы "вырезаем" все флаги оптимизации x86 из Makefile
-          sed -i 's/-mavx -mavx2 -mfma -mf16c -msse3 -mssse3/-DGGML_ARM_NO_FP16/g' Makefile
-          # Теперь запускаем сборку с указанием нашего кросс-компилятора и флагом -static
-          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ LDFLAGS="-static"
+          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ПРЯМОЙ ВЫЗОВ КОМПИЛЯТОРА ---
+          # Мы полностью игнорируем Makefile и вызываем g++ напрямую,
+          # перечисляя все нужные файлы и безопасные флаги.
+          aarch64-linux-gnu-g++ \
+            -I. -I./examples \
+            -O3 -DNDEBUG -std=c++11 -fPIC -pthread -D_GNU_SOURCE \
+            -o main \
+            whisper.cpp \
+            ggml.c \
+            ggml-alloc.c \
+            ggml-backend.c \
+            ggml-quants.c \
+            examples/common.cpp \
+            examples/main/main.cpp \
+            -static
 
       - name: Prepare Artifact
         run: |
