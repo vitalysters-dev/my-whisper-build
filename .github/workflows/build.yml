@@ -1,4 +1,4 @@
-name: Build Whisper.cpp for CoreELEC
+name: Build Whisper.cpp for CoreELEC (Optimized)
 
 on:
   push:
@@ -19,27 +19,14 @@ jobs:
           wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.5.1.tar.gz
           tar -xvf v1.5.1.tar.gz
 
-      - name: Build Whisper.cpp
+      - name: Build Whisper.cpp with Optimizations
         run: |
           cd whisper.cpp-1.5.1
-          # --- ФИНАЛЬНЫЙ ШАГ: ПРЯМОЙ ВЫЗОВ КОМПИЛЯТОРА С ПРАВИЛЬНЫМИ ФАЙЛАМИ И ФЛАГАМИ ---
+          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ЗАМЕНЯЕМ ОПАСНЫЕ ФЛАГИ НА БЕЗОПАСНЫЕ ---
+          sed -i 's/-mavx -mavx2 -mfma -mf16c -msse3 -mssse3/-march=armv8-a+neon/g' Makefile
           
-          # 1. Сначала компилируем все .c файлы в .o с помощью gcc
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml.c -o ggml.o
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-alloc.c -o ggml-alloc.o
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-backend.c -o ggml-backend.o
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-quants.c -o ggml-quants.o
-
-          # 2. Теперь "склеиваем" все вместе с помощью g++, добавив флаг -static
-          aarch64-linux-gnu-g++ \
-            -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread \
-            examples/main/main.cpp \
-            examples/common.cpp \
-            examples/common-ggml.cpp \
-            whisper.cpp \
-            ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o \
-            -o main \
-            -static
+          # Запускаем сборку с указанием нашего кросс-компилятора и флагом -static
+          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ LDFLAGS="-static"
 
       - name: Prepare Artifact
         run: |
@@ -49,5 +36,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-main-binary
+          name: whisper-main-binary-optimized
           path: artifact
