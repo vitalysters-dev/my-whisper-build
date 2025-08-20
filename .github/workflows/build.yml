@@ -12,7 +12,6 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Правильное имя пакета ---
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - name: Download Whisper.cpp Source
@@ -23,8 +22,24 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ПРОВЕРЕННЫЙ, НАДЕЖНЫЙ МЕТОД ---
-          make main CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ LDFLAGS="-static"
+          # --- ФИНАЛЬНЫЙ ШАГ: ПРЯМОЙ ВЫЗОВ КОМПИЛЯТОРА С ПОЛНЫМ НАБОРОМ ФАЙЛОВ И ФЛАГОВ ---
+          
+          # 1. Сначала компилируем все .c файлы в .o с помощью gcc
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml.c -o ggml.o
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-alloc.c -o ggml-alloc.o
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-backend.c -o ggml-backend.o
+          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=c11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread -c ggml-quants.c -o ggml-quants.o
+
+          # 2. Теперь "склеиваем" все вместе с помощью g++, добавив флаг -static и все нужные .cpp файлы
+          aarch64-linux-gnu-g++ \
+            -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -pthread \
+            examples/main/main.cpp \
+            examples/common.cpp \
+            examples/common-ggml.cpp \
+            whisper.cpp \
+            ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o \
+            -o main \
+            -static
 
       - name: Prepare Artifact
         run: |
@@ -34,5 +49,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-main-binary-optimized
+          name: whisper-main-binary
           path: artifact
