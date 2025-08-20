@@ -22,21 +22,25 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.4.0
-          # --- ФИНАЛЬНЫЙ ШАГ: ПРАВИЛЬНЫЙ СПИСОК ФАЙЛОВ И МИНИМАЛЬНЫЕ ФЛАГИ ---
+          # --- ФИНАЛЬНЫЙ ШАГ: ПРАВИЛЬНЫЙ ПРОЦЕСС СБОРКИ ---
           
-          # 1. Компилируем .c файл
+          # 1. Компилируем все .c и .cpp файлы в объектные файлы .o
           aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml.c -o ggml.o
+          aarch64-linux-gnu-g++ -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -c whisper.cpp -o whisper.o
+          aarch64-linux-gnu-g++ -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -c examples/common.cpp -o common.o
+          aarch64-linux-gnu-g++ -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -c examples/common-ggml.cpp -o common-ggml.o
+          aarch64-linux-gnu-g++ -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread -c examples/main/main.cpp -o main.o
           
-          # 2. "Склеиваем" все вместе, УБРАВ +neon
+          # 2. "Склеиваем" все .o файлы вместе, чтобы создать исполняемый файл main
           aarch64-linux-gnu-g++ \
-            -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread \
             -march=armv8-a \
             -o main \
-            whisper.cpp \
-            examples/common.cpp \
-            examples/common-ggml.cpp \
+            main.o \
+            common.o \
+            common-ggml.o \
+            whisper.o \
             ggml.o \
-            -static
+            -static -pthread
 
       - name: Prepare Artifact
         run: |
@@ -46,5 +50,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-main-binary-final-v2
+          name: whisper-main-binary-final-v3
           path: artifact
