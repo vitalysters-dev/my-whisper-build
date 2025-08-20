@@ -16,35 +16,34 @@ jobs:
 
       - name: Download Whisper.cpp Source
         run: |
-          wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.5.1.tar.gz
-          tar -xvf v1.5.1.tar.gz
+          wget https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v1.4.0.tar.gz
+          tar -xvf v1.4.0.tar.gz
 
       - name: Build Whisper.cpp
         run: |
-          cd whisper.cpp-1.5.1
-          # --- ФИНАЛЬНЫЙ ШАГ: ПРАВИЛЬНЫЙ КОМПИЛЯТОР И ПРАВИЛЬНЫЕ ФЛАГИ ДЛЯ КАЖДОГО ---
+          cd whisper.cpp-1.4.0
+          # --- ФИНАЛЬНЫЙ ШАГ: ПРЯМОЙ ВЫЗОВ С ПОЛНЫМ НАБОРОМ ПРОВЕРЕННЫХ ФЛАГОВ ---
           
-          # 1. Компилируем все .c файлы в .o с помощью gcc и правильных флагов
+          # 1. Компилируем все .c файлы с помощью gcc
           aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml.c -o ggml.o
           aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml-alloc.c -o ggml-alloc.o
           aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml-backend.c -o ggml-backend.o
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml-quants.c -o ggml-quants.o
 
-          # 2. Компилируем .cpp файлы и "склеиваем" все вместе с помощью g++
+          # 2. "Склеиваем" все вместе с помощью g++, явно включая NEON
           aarch64-linux-gnu-g++ \
             -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread \
-            -march=armv8-a \
+            -march=armv8-a+neon \
             -o main \
             whisper.cpp \
             examples/common.cpp \
-            examples/main/main.cpp \
-            ggml.o ggml-alloc.o ggml-backend.o ggml-quants.o \
+            examples/common-ggml.cpp \
+            ggml.o ggml-alloc.o ggml-backend.o \
             -static
 
       - name: Prepare Artifact
         run: |
           mkdir artifact
-          cp whisper.cpp-1.5.1/main ./artifact/
+          cp whisper.cpp-1.4.0/main ./artifact/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
