@@ -1,4 +1,4 @@
-name: Build Whisper.cpp for CoreELEC (Optimized)
+name: Build Whisper.cpp for CoreELEC
 
 on:
   push:
@@ -22,18 +22,16 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.5.1
-          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ПРЯМОЙ ВЫЗОВ С ЯВНЫМ УКАЗАНИЕМ ЦЕЛИ ---
+          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: МЫ ИСКЛЮЧАЕМ ПРОБЛЕМНЫЙ ФАЙЛ ИЗ СБОРКИ ---
           aarch64-linux-gnu-g++ \
             -I. -I./examples \
             -O3 -DNDEBUG -std=c++11 -fPIC -pthread -D_GNU_SOURCE \
-            -march=armv8-a+crc+crypto \
-            -DGGML_USE_K_QUANTS \
+            -march=armv8-a \
             -o main \
             whisper.cpp \
             ggml.c \
             ggml-alloc.c \
             ggml-backend.c \
-            ggml-quants.c \
             examples/common.cpp \
             examples/main/main.cpp \
             -static
@@ -46,5 +44,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-main-binary-optimized-v2
+          name: whisper-main-binary-final
           path: artifact
