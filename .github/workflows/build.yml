@@ -22,14 +22,12 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.4.0
-          # --- ФИНАЛЬНЫЙ ШАГ: ПРЯМОЙ ВЫЗОВ С ПОЛНЫМ НАБОРОМ ПРОВЕРЕННЫХ ФЛАГОВ ---
+          # --- ФИНАЛЬНЫЙ ШАГ: ПРАВИЛЬНЫЙ СПИСОК ФАЙЛОВ И ФЛАГИ ---
           
-          # 1. Компилируем все .c файлы с помощью gcc
+          # 1. Компилируем единственный .c файл - ggml.c
           aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml.c -o ggml.o
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml-alloc.c -o ggml-alloc.o
-          aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml-backend.c -o ggml-backend.o
-
-          # 2. "Склеиваем" все вместе с помощью g++, явно включая NEON
+          
+          # 2. "Склеиваем" все вместе
           aarch64-linux-gnu-g++ \
             -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread \
             -march=armv8-a+neon \
@@ -37,7 +35,7 @@ jobs:
             whisper.cpp \
             examples/common.cpp \
             examples/common-ggml.cpp \
-            ggml.o ggml-alloc.o ggml-backend.o \
+            ggml.o \
             -static
 
       - name: Prepare Artifact
