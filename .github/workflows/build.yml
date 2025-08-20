@@ -22,15 +22,15 @@ jobs:
       - name: Build Whisper.cpp
         run: |
           cd whisper.cpp-1.4.0
-          # --- ФИНАЛЬНЫЙ ШАГ: ПРАВИЛЬНЫЙ СПИСОК ФАЙЛОВ И ФЛАГИ ---
+          # --- ФИНАЛЬНЫЙ ШАГ: ПРАВИЛЬНЫЙ СПИСОК ФАЙЛОВ И МИНИМАЛЬНЫЕ ФЛАГИ ---
           
-          # 1. Компилируем единственный .c файл - ggml.c
+          # 1. Компилируем .c файл
           aarch64-linux-gnu-gcc -I. -O3 -DNDEBUG -std=gnu11 -fPIC -pthread -D_GNU_SOURCE -c ggml.c -o ggml.o
           
-          # 2. "Склеиваем" все вместе
+          # 2. "Склеиваем" все вместе, УБРАВ +neon
           aarch64-linux-gnu-g++ \
             -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -pthread \
-            -march=armv8-a+neon \
+            -march=armv8-a \
             -o main \
             whisper.cpp \
             examples/common.cpp \
@@ -46,5 +46,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-main-binary-final
+          name: whisper-main-binary-final-v2
           path: artifact
